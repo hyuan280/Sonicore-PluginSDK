@@ -16,6 +16,22 @@
           "date": "2026-09-12"
         }
       ]
+    },
+    {
+      "name": "notifydemo",
+      "version": "1.0.0",
+      "updated_at": "2026-09-12",
+      "download_url": "https://github.com/hyuan280/Sonicore-PluginSDK/releases/download/notifydemo-v1.0.0/notifydemo-1.0.0.tar.gz",
+      "sha256": "61f76fa13db9f960d500b48638f68e16c2fca6ac476f05f8946ee45be95c48ec",
+      "author": "hyuan280",
+      "description": "示例通知插件：把收到的每条通知写入宿主日志",
+      "history": [
+        {
+          "version": "1.0.0",
+          "description": "首个版本：通知渠道接入示例",
+          "date": "2026-01-15"
+        }
+      ]
     }
   ]
 }
