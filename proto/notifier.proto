@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package sonicore.plugin.v1;
+
+option go_package = "github.com/hyuan280/Sonicore-PluginSDK/go/gen;gen";
+
+// NotifierService is implemented by notification-channel plugins. The host
+// (Sonicore server) calls Send for every notification routed to the channel.
+// Lifecycle RPCs (Init/Shutdown) live in LifecycleService, shared by every
+// plugin kind.
+service NotifierService {
+  rpc Send(SendRequest) returns (SendResponse);
+}
+
+message SendRequest {
+  // ABI version sent by the host; plugins may use it to negotiate behavior.
+  string api_version = 1;
+  NotificationMessage message = 2;
+}
+
+// NotificationMessage mirrors the host's domain notification message.
+message NotificationMessage {
+  string id = 1;
+  string type = 2;    // notification type, e.g. "scan_complete"
+  string channel = 3; // channel type, e.g. "telegram"
+  repeated string to = 4;
+  string subject = 5;
+  string text_body = 6;
+  string html_body = 7;
+  map<string, string> metadata = 8;
+  string created_at = 9; // RFC3339
+}
+
+message SendResponse {
+  // Empty on success; a human-readable error otherwise.
+  string error = 1;
+}

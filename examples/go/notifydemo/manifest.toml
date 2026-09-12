@@ -1,0 +1,17 @@
+[plugin]
+name = "notifydemo"
+version = "1.0.0"
+description = "示例通知插件：把收到的每条通知写入宿主日志"
+author = "hyuan280"
+services = ["notifier"]
+abi = "sonicore.plugin.v1"
+
+[plugin.config]
+greeting = { type = "string", label = "问候语", default = "Hello" }
+level = { type = "string", label = "日志级别", default = "info" }
+to_stdout = { type = "boolean", label = "同时输出到 stdout", default = false }
+
+[[plugin.history]]
+version = "1.0.0"
+date = "2026-01-15"
+description = "首个版本：通知渠道接入示例"

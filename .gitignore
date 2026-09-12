@@ -1,0 +1,16 @@
+# Downloaded protoc toolchain (proto/regen.sh)
+.tools/
+
+# Python packaging artifacts
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+
+# Go build outputs
+*.test
+
+# make go-build output (example plugin binaries)
+out/
+

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package sonicore.plugin.v1;
+
+option go_package = "github.com/hyuan280/Sonicore-PluginSDK/go/gen;gen";
+
+// TaskService is implemented by every plugin (the SDK provides it). The
+// host's scheduler calls RunTask when a schedule registered via
+// HostService.RegisterSchedule fires.
+service TaskService {
+  rpc RunTask(RunTaskRequest) returns (RunTaskResponse);
+}
+
+message RunTaskRequest {
+  string task_id = 1;
+}
+
+message RunTaskResponse {
+  // Empty on success; a human-readable error otherwise.
+  string error = 1;
+}

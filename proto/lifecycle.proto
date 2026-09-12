@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package sonicore.plugin.v1;
+
+option go_package = "github.com/hyuan280/Sonicore-PluginSDK/go/gen;gen";
+
+// LifecycleService is implemented by every plugin regardless of its kind
+// (the SDK provides the implementation automatically). The host calls Init
+// once right after the connection is established, ConfigChanged whenever
+// the admin updates the plugin configuration, and Shutdown when it wants
+// the plugin to stop gracefully (run cleanup, then exit).
+service LifecycleService {
+  rpc Init(InitRequest) returns (InitResponse);
+  rpc ConfigChanged(ConfigChangedRequest) returns (ConfigChangedResponse);
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+}
+
+// InitRequest hands the plugin the broker id on which the host serves
+// HostService (GetConfig/Log/ReportStatus/Ping) and the current plugin
+// configuration. The plugin dials the broker id with the GRPCBroker it
+// received in its GRPCServer callback; the SDK does this automatically and
+// caches the delivered configuration (CurrentConfig). The plugin can pull
+// fresh configuration at any time with RefreshConfig.
+message InitRequest {
+  string api_version = 1;
+  uint32 host_broker_id = 2;
+  // The plugin's current configuration as a JSON document ("" when the
+  // admin has not configured anything yet).
+  string config_json = 3;
+}
+
+message InitResponse {}
+
+// ConfigChanged notifies the plugin that the host-side configuration was
+// updated (admin UI). The SDK refreshes its cache with the delivered
+// config_json and invokes the plugin's optional ConfigChangeAware hook, so
+// long-lived resources (sessions, clients) can be rebuilt.
+message ConfigChangedRequest {
+  string config_json = 1;
+}
+
+message ConfigChangedResponse {}
+
+// Shutdown asks the plugin to stop: the SDK runs the plugin's optional
+// ShutdownAware hook, replies and then exits the process. The host falls
+// back to killing the process when the plugin does not exit in time.
+message ShutdownRequest {}
+
+message ShutdownResponse {}

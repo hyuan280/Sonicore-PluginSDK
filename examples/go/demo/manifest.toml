@@ -1,0 +1,14 @@
+[plugin]
+name = "demo"
+version = "1.0.0"
+description = "示例插件：无扩展点，仅 Init 与生命周期钩子"
+author = "hyuan280"
+abi = "sonicore.plugin.v1"
+
+[plugin.config]
+greeting = { type = "string", label = "问候语", default = "Hello" }
+
+[[plugin.history]]
+version = "1.0.0"
+date = "2026-09-12"
+description = "首个版本：生命周期 + 配置表单 + 数据页示例"

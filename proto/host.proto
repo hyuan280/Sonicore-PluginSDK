@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package sonicore.plugin.v1;
+
+option go_package = "github.com/hyuan280/Sonicore-PluginSDK/go/gen;gen";
+
+// HostService is implemented by the Sonicore server and called by plugins.
+// The connection is the same multiplexed gRPC connection used for the
+// plugin's own service, so every plugin can call these RPCs without any
+// extra setup beyond what RegisterNotifier provides.
+service HostService {
+  rpc GetConfig(GetConfigRequest) returns (GetConfigResponse);
+  rpc GetData(GetDataRequest) returns (GetDataResponse);
+  rpc SetData(SetDataRequest) returns (SetDataResponse);
+  rpc DeleteData(DeleteDataRequest) returns (DeleteDataResponse);
+  rpc RegisterSchedule(RegisterScheduleRequest) returns (RegisterScheduleResponse);
+  rpc Log(LogRequest) returns (LogResponse);
+  rpc ReportStatus(ReportStatusRequest) returns (ReportStatusResponse);
+  rpc Ping(PingRequest) returns (PingResponse);
+}
+
+message GetConfigRequest {
+  string plugin_id = 1;
+}
+
+message GetConfigResponse {
+  // The plugin's current configuration as a JSON document. The host stores
+  // plugin configuration in its database and returns the latest value here,
+  // so plugins can re-fetch at any time to pick up configuration changes.
+  string config_json = 1;
+}
+
+// Plugin-private key/value data. The host stores it in its database under
+// the plugin's own namespace (plugin_id + key), so plugins never need to
+// manage files. Values are JSON documents.
+message GetDataRequest {
+  string plugin_id = 1;
+  string key = 2;
+}
+
+message GetDataResponse {
+  // JSON-encoded value ("" when the key does not exist).
+  string value_json = 1;
+}
+
+message SetDataRequest {
+  string plugin_id = 1;
+  string key = 2;
+  string value_json = 3;
+}
+
+message SetDataResponse {}
+
+message DeleteDataRequest {
+  string plugin_id = 1;
+  string key = 2;
+}
+
+message DeleteDataResponse {}
+
+// Declarative scheduled tasks (mirrors a plugin declaring services like
+// "run every hour" in in-process plugin systems): the plugin registers a
+// schedule at Init and the host scheduler calls back into the plugin's
+// TaskService.RunTask when the trigger fires.
+message ScheduleSpec {
+  string id = 1;
+  string name = 2;
+  // Standard 5-field cron expression, e.g. "0 * * * *".
+  string cron = 3;
+  // Duration string, e.g. "1h30m". Exactly one of cron/interval must be
+  // set.
+  string interval = 4;
+}
+
+message RegisterScheduleRequest {
+  string plugin_id = 1;
+  ScheduleSpec schedule = 2;
+}
+
+message RegisterScheduleResponse {}
+
+message LogRequest {
+  string plugin_id = 1;
+  string level = 2;   // debug|info|warn|error
+  string message = 3;
+}
+
+message LogResponse {}
+
+message ReportStatusRequest {
+  string plugin_id = 1;
+  string status = 2;  // ok|error|config_invalid
+  string error = 3;   // human-readable detail when status != ok
+}
+
+message ReportStatusResponse {}
+
+message PingRequest {}
+
+message PingResponse {}

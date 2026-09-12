@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package sonicore.plugin.v1;
+
+option go_package = "github.com/hyuan280/Sonicore-PluginSDK/go/gen;gen";
+
+// UIService is implemented by plugins that provide server-driven UI
+// assembly (the process-isolated equivalent of an in-process plugin's
+// get_form/get_page): the plugin returns a JSON schema describing the
+// config form or the detail page, and the host frontend renders it with
+// its component vocabulary. Plugins that do not register a builder simply
+// leave the host to fall back (config form from the manifest schema, no
+// data page).
+service UIService {
+  rpc GetForm(GetFormRequest) returns (GetFormResponse);
+  rpc GetPage(GetPageRequest) returns (GetPageResponse);
+}
+
+message GetFormRequest {}
+
+message GetFormResponse {
+  // UI assembly JSON (see pluginsdk.Component). Empty when the plugin does
+  // not provide a form.
+  string schema_json = 1;
+}
+
+message GetPageRequest {}
+
+message GetPageResponse {
+  // UI assembly JSON (see pluginsdk.Component). Empty when the plugin does
+  // not provide a data page.
+  string schema_json = 1;
+}
