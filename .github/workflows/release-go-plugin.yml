@@ -1,0 +1,85 @@
+name: Release Go Plugin
+
+# Version-driven publishing for the example plugins: bump `[plugin]
+# version` in a plugin's manifest.toml and push. Job build packs new
+# releases; job publish (serialized) commits the market catalog, pushes
+# commits + tags in one push and creates the GitHub release. Failure
+# recovery is an idempotent re-run: existing tags/releases are skipped and
+# the asset upload clobbers.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "examples/go/**/manifest.toml"
+      - "scripts/plugin-release.sh"
+      - "scripts/plugin-pack.py"
+      - ".github/workflows/release-plugin.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.detect.outputs.plugins }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: Install goimports
+        run: go install golang.org/x/tools/cmd/goimports@latest
+
+      - name: Detect changed plugins
+        id: detect
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          { echo "plugins<<EOF"; ./scripts/plugin-release.sh detect; echo "EOF"; } >> "$GITHUB_OUTPUT"
+
+      - name: Verify
+        run: make check
+
+      - name: Check versions and pack
+        run: ./scripts/plugin-release.sh build
+        env:
+          PLUGINS: ${{ steps.detect.outputs.plugins }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-dist
+          path: dist/
+          if-no-files-found: ignore
+
+  publish:
+    needs: build
+    if: needs.build.outputs.plugins != ''
+    concurrency:
+      group: plugin-publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: market-dist
+          path: dist/
+
+      - name: Publish
+        run: ./scripts/plugin-release.sh publish
+        env:
+          GH_TOKEN: ${{ github.token }}

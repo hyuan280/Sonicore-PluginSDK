@@ -1,0 +1,82 @@
+name: Release Go SDK
+
+# Version-file driven publishing: bump go/version.go and push to main. This
+# workflow verifies the module, tags go/vX.Y.Z and creates a GitHub release.
+# The Go module proxy picks the tag up automatically. workflow_dispatch is
+# the fallback for re-running a release without bumping the version.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "go/version.go"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: Install goimports
+        run: go install golang.org/x/tools/cmd/goimports@latest
+
+      - name: Detect version
+        id: ver
+        run: |
+          V=$(grep -oP 'Version = "\K[^"]+' go/version.go)
+          if [ -z "$V" ]; then
+            echo "::error::cannot read version from go/version.go"
+            exit 1
+          fi
+          case "$V" in
+            [0-9]*.[0-9]*.[0-9]*|[0-9]*.[0-9]*.[0-9]*-*) ;;
+            *)
+              echo "::error::version '$V' is not semver (X.Y.Z[-pre])"
+              exit 1
+              ;;
+          esac
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          if git ls-remote --tags origin "refs/tags/go/v$V" | grep -q .; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify module
+        if: steps.ver.outputs.exists != 'true'
+        run: make check
+
+      - name: Tag go/v${{ steps.ver.outputs.version }}
+        if: steps.ver.outputs.exists != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "go/v${{ steps.ver.outputs.version }}"
+          git push origin "go/v${{ steps.ver.outputs.version }}"
+
+      - name: GitHub release
+        if: steps.ver.outputs.exists != 'true'
+        run: |
+          gh release create "go/v${{ steps.ver.outputs.version }}" \
+            --title "Go SDK v${{ steps.ver.outputs.version }}" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Warm module proxy and sumdb
+        if: steps.ver.outputs.exists != 'true'
+        run: |
+          # First fetch caches the module on proxy.golang.org and records its
+          # checksum on sum.golang.org; pkg.go.dev indexes it on first request
+          # (https://pkg.go.dev/github.com/hyuan280/Sonicore-PluginSDK/go).
+          # The version is plain vX.Y.Z: the subdirectory module resolves it
+          # to the go/vX.Y.Z tag automatically.
+          go list -m "github.com/hyuan280/Sonicore-PluginSDK/go@v${{ steps.ver.outputs.version }}"
