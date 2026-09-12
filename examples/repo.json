@@ -1,3 +1,21 @@
 {
-  "name": "demo-plugins"
+  "name": "demo-plugins",
+  "plugins": [
+    {
+      "name": "demo",
+      "version": "1.0.0",
+      "updated_at": "2026-09-12",
+      "download_url": "https://github.com/hyuan280/Sonicore-PluginSDK/releases/download/demo-v1.0.0/demo-1.0.0.tar.gz",
+      "sha256": "560ca7903aa4281d89de42d729a2db459c18c068a47e71d0846156501b1fe4ce",
+      "author": "hyuan280",
+      "description": "示例插件：无扩展点，仅 Init 与生命周期钩子",
+      "history": [
+        {
+          "version": "1.0.0",
+          "description": "首个版本：生命周期 + 配置表单 + 数据页示例",
+          "date": "2026-09-12"
+        }
+      ]
+    }
+  ]
 }
